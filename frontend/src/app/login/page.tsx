@@ -43,8 +43,8 @@ export default function LoginPage() {
       </div>
 
       <div className="flex-1 flex items-center justify-center p-10">
-        <div className="w-full max-w-[340px]">
-          <div className="flex items-center gap-2 mb-7">
+        <div className="w-full max-w-[340px] -translate-y-6">
+          <div className="flex items-center gap-2 mb-8">
             <div className="w-[22px] h-[22px] rounded-md bg-brass" />
             <span className="font-display text-base font-medium">Trackly</span>
           </div>

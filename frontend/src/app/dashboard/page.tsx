@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { Application, ApplicationStatus } from "@/lib/types";
 import Sidebar from "@/components/Sidebar";
+import AddApplicationModal from "@/components/AddApplicationModal";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
@@ -49,6 +50,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -104,6 +106,12 @@ export default function DashboardPage() {
               {applications.length !== 1 ? "s" : ""}
             </p>
           </div>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="bg-navy text-white text-sm font-medium px-4 py-2.5 rounded-lg"
+          >
+            + Add application
+          </button>
         </div>
 
         <div className="grid grid-cols-4 gap-3 mb-7">
@@ -189,6 +197,12 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+
+        <AddApplicationModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onCreated={(newApp) => setApplications((prev) => [newApp, ...prev])}
+        />
       </div>
     </div>
   );

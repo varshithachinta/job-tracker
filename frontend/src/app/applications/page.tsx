@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useApplications } from "@/lib/useApplications";
-import { ApplicationStatus } from "@/lib/types";
-import Sidebar from "@/components/Sidebar";
-import ApplicationDetailModal from "@/components/ApplicationDetailModal";
 import { Application, ApplicationStatus } from "@/lib/types";
+import Sidebar from "@/components/Sidebar";
+import MobileNav from "@/components/MobileNav";
+import ApplicationDetailModal from "@/components/ApplicationDetailModal";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
@@ -62,12 +62,12 @@ export default function AllApplicationsPage() {
     });
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="flex min-h-screen bg-bg pb-16 md:pb-0">
       <Sidebar />
 
-      <div className="flex-1 p-9 min-w-0">
+      <div className="flex-1 p-5 md:p-9 min-w-0">
         <div className="mb-6">
-          <h1 className="font-display text-[26px] font-medium mb-1">
+          <h1 className="font-display text-xl md:text-[26px] font-medium mb-1">
             All applications
           </h1>
           <p className="text-text-secondary text-sm">
@@ -75,19 +75,19 @@ export default function AllApplicationsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search company or role…"
-            className="flex-1 max-w-xs px-3.5 py-2 border border-border-strong rounded-lg text-sm bg-white"
+            className="w-full md:flex-1 md:max-w-xs px-3.5 py-2 border border-border-strong rounded-lg text-sm bg-white"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setFilter(f.value)}
-                className={`text-sm px-3 py-1.5 rounded-md border ${
+                className={`text-sm px-3 py-1.5 rounded-md border shrink-0 ${
                   filter === f.value
                     ? "bg-surface border-border-strong font-medium"
                     : "border-transparent text-text-secondary"
@@ -132,8 +132,11 @@ export default function AllApplicationsPage() {
                   <p className="text-sm font-medium truncate">
                     {app.company_name}
                   </p>
+                  <p className="text-xs text-text-muted truncate md:hidden">
+                    {app.role_title}
+                  </p>
                 </div>
-                <div className="w-[160px] shrink-0 text-sm text-text-secondary truncate">
+                <div className="w-[160px] shrink-0 text-sm text-text-secondary truncate hidden md:block">
                   {app.role_title}
                 </div>
                 <span
@@ -141,7 +144,7 @@ export default function AllApplicationsPage() {
                 >
                   {STATUS_LABELS[app.status]}
                 </span>
-                <span className="text-xs text-text-muted w-14 text-right shrink-0">
+                <span className="text-xs text-text-muted w-14 text-right shrink-0 hidden sm:inline">
                   {formatDate(app.applied_date)}
                 </span>
               </div>
@@ -162,6 +165,7 @@ export default function AllApplicationsPage() {
           }
         />
       </div>
+      <MobileNav />
     </div>
   );
 }

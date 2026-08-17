@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { api, ApiError } from "@/lib/api";
-import { Application, ApplicationStatus } from "@/lib/types";
+import { useState } from "react";
+import { useApplications } from "@/lib/useApplications";
+import { ApplicationStatus } from "@/lib/types";
 import Sidebar from "@/components/Sidebar";
+import MobileNav from "@/components/MobileNav";
 import AddApplicationModal from "@/components/AddApplicationModal";
 import ApplicationDetailModal from "@/components/ApplicationDetailModal";
+import { Application } from "@/lib/types";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
@@ -46,40 +47,10 @@ function formatDate(dateStr: string | null) {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { applications, setApplications, loading, error } = useApplications();
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    loadApplications();
-  }, []);
-
-  async function loadApplications() {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await api.get<Application[]>("/applications");
-      setApplications(data);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        localStorage.removeItem("token");
-        router.push("/login");
-        return;
-      }
-      setError("Could not load applications. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const counts = {
     applied: applications.filter((a) => a.status === "applied").length,
@@ -94,11 +65,29 @@ export default function DashboardPage() {
       : applications.filter((a) => a.status === filter);
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="flex min-h-screen bg-bg pb-16 md:pb-0">
       <Sidebar />
 
-      <div className="flex-1 p-9 min-w-0">
-        <div className="flex items-baseline justify-between mb-7">
+      <div className="flex-1 p-5 md:p-9 min-w-0">
+        <div className="md:hidden -mx-5 -mt-5 mb-5 bg-navy text-white px-5 pt-6 pb-4 rounded-b-2xl flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-lg font-medium mb-0.5">
+              Hi, Varshu
+            </h1>
+            <p className="text-xs text-[#9CA1AF]">
+              {applications.length} active application
+              {applications.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="w-10 h-10 rounded-full bg-brass flex items-center justify-center text-xl shrink-0"
+          >
+            +
+          </button>
+        </div>
+
+        <div className="hidden md:flex items-baseline justify-between mb-7">
           <div>
             <h1 className="font-display text-[26px] font-medium mb-1">
               Applications
@@ -116,31 +105,31 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 mb-7">
-          <div className="bg-surface border border-border rounded-[10px] px-4 py-3">
+        <div className="flex md:grid md:grid-cols-4 gap-3 mb-7 overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0 md:overflow-visible">
+          <div className="bg-surface border border-border rounded-[10px] px-4 py-3 shrink-0 min-w-[110px] md:min-w-0">
             <p className="text-xs text-text-muted mb-1">Applied</p>
             <p className="text-xl font-medium">{counts.applied}</p>
           </div>
-          <div className="bg-surface border border-border rounded-[10px] px-4 py-3">
+          <div className="bg-surface border border-border rounded-[10px] px-4 py-3 shrink-0 min-w-[110px] md:min-w-0">
             <p className="text-xs text-text-muted mb-1">Screening</p>
             <p className="text-xl font-medium">{counts.oa}</p>
           </div>
-          <div className="bg-surface border border-border rounded-[10px] px-4 py-3">
+          <div className="bg-surface border border-border rounded-[10px] px-4 py-3 shrink-0 min-w-[110px] md:min-w-0">
             <p className="text-xs text-text-muted mb-1">Interview</p>
             <p className="text-xl font-medium">{counts.interview}</p>
           </div>
-          <div className="bg-surface border border-border rounded-[10px] px-4 py-3">
+          <div className="bg-surface border border-border rounded-[10px] px-4 py-3 shrink-0 min-w-[110px] md:min-w-0">
             <p className="text-xs text-text-muted mb-1">Offer</p>
             <p className="text-xl font-medium">{counts.offer}</p>
           </div>
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`text-sm px-3 py-1.5 rounded-md border ${
+              className={`text-sm px-3 py-1.5 rounded-md border shrink-0 ${
                 filter === f.value
                   ? "bg-surface border-border-strong font-medium"
                   : "border-transparent text-text-secondary"
@@ -155,9 +144,7 @@ export default function DashboardPage() {
           <p className="text-text-secondary text-sm py-8">Loading…</p>
         )}
 
-        {error && (
-          <p className="text-rejected text-sm py-4">⚠ {error}</p>
-        )}
+        {error && <p className="text-rejected text-sm py-4">⚠ {error}</p>}
 
         {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-16">
@@ -193,7 +180,7 @@ export default function DashboardPage() {
                 >
                   {STATUS_LABELS[app.status]}
                 </span>
-                <span className="text-xs text-text-muted w-14 text-right shrink-0">
+                <span className="text-xs text-text-muted w-14 text-right shrink-0 hidden sm:inline">
                   {formatDate(app.applied_date)}
                 </span>
               </div>
@@ -220,6 +207,7 @@ export default function DashboardPage() {
           }
         />
       </div>
+      <MobileNav />
     </div>
   );
 }

@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { api, ApiError } from "@/lib/api";
-import { Application } from "@/lib/types";
+import { useApplications } from "@/lib/useApplications";
 import Sidebar from "@/components/Sidebar";
+import MobileNav from "@/components/MobileNav";
 
 const STATUS_BAR_COLORS: Record<string, string> = {
   applied: "bg-applied",
@@ -27,62 +25,34 @@ function startOfWeek(date: Date) {
 }
 
 export default function InsightsPage() {
-  const router = useRouter();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    load();
-  }, []);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const data = await api.get<Application[]>("/applications");
-      setApplications(data);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        localStorage.removeItem("token");
-        router.push("/login");
-        return;
-      }
-      setError("Could not load insights.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { applications, loading, error } = useApplications();
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-bg">
+      <div className="flex min-h-screen bg-bg pb-16 md:pb-0">
         <Sidebar />
-        <div className="flex-1 p-9">
+        <div className="flex-1 p-5 md:p-9">
           <p className="text-text-secondary text-sm">Loading…</p>
         </div>
+        <MobileNav />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen bg-bg">
+      <div className="flex min-h-screen bg-bg pb-16 md:pb-0">
         <Sidebar />
-        <div className="flex-1 p-9">
+        <div className="flex-1 p-5 md:p-9">
           <p className="text-rejected text-sm">⚠ {error}</p>
         </div>
+        <MobileNav />
       </div>
     );
   }
 
   const total = applications.length;
 
-  // Status breakdown
   const statusCounts = {
     applied: applications.filter((a) => a.status === "applied").length,
     oa: applications.filter((a) => a.status === "oa").length,
@@ -91,11 +61,9 @@ export default function InsightsPage() {
     rejected: applications.filter((a) => a.status === "rejected").length,
   };
 
-  // Response rate: anything past "applied" counts as a response
   const responded = total - statusCounts.applied;
   const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
 
-  // Avg days to first response (created_at -> updated_at, for apps that moved)
   const respondedApps = applications.filter(
     (a) => a.status !== "applied" && a.updated_at
   );
@@ -112,13 +80,11 @@ export default function InsightsPage() {
         ).toFixed(1)
       : "—";
 
-  // Funnel: how many reached at least this stage
   const funnel = [
     { label: "Applied", count: total, color: "applied" },
     {
       label: "Screening",
-      count:
-        statusCounts.oa + statusCounts.interview + statusCounts.offer,
+      count: statusCounts.oa + statusCounts.interview + statusCounts.offer,
       color: "screening",
     },
     {
@@ -130,7 +96,6 @@ export default function InsightsPage() {
   ];
   const maxFunnel = funnel[0].count || 1;
 
-  // Weekly trend: last 5 weeks, by applied_date
   const now = new Date();
   const weeks = Array.from({ length: 5 }, (_, i) => {
     const start = startOfWeek(now);
@@ -147,12 +112,12 @@ export default function InsightsPage() {
   const maxWeek = Math.max(...weeks.map((w) => w.count), 1);
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <div className="flex min-h-screen bg-bg pb-16 md:pb-0">
       <Sidebar />
 
-      <div className="flex-1 p-9 min-w-0">
+      <div className="flex-1 p-5 md:p-9 min-w-0">
         <div className="mb-7">
-          <h1 className="font-display text-[26px] font-medium mb-1">
+          <h1 className="font-display text-xl md:text-[26px] font-medium mb-1">
             Insights
           </h1>
           <p className="text-text-secondary text-sm">
@@ -166,7 +131,7 @@ export default function InsightsPage() {
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-surface border border-border rounded-xl p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-4">
                   Overview
@@ -225,7 +190,7 @@ export default function InsightsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-surface border border-border rounded-xl p-5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary mb-4">
                   Applications per week
@@ -279,6 +244,7 @@ export default function InsightsPage() {
           </>
         )}
       </div>
+      <MobileNav />
     </div>
   );
 }

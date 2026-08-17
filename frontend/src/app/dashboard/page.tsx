@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import { Application, ApplicationStatus } from "@/lib/types";
 import Sidebar from "@/components/Sidebar";
 import AddApplicationModal from "@/components/AddApplicationModal";
+import ApplicationDetailModal from "@/components/ApplicationDetailModal";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
@@ -51,6 +52,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<ApplicationStatus | "all">("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -172,7 +174,8 @@ export default function DashboardPage() {
             {filtered.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center gap-3 px-3.5 py-3 border border-border rounded-[10px] bg-surface"
+                onClick={() => setSelectedApp(app)}
+                className="flex items-center gap-3 px-3.5 py-3 border border-border rounded-[10px] bg-surface cursor-pointer hover:border-border-strong"
               >
                 <div className="w-[30px] h-[30px] rounded-[7px] bg-applied-bg text-applied flex items-center justify-center text-xs font-medium shrink-0">
                   {initials(app.company_name)}
@@ -202,6 +205,19 @@ export default function DashboardPage() {
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           onCreated={(newApp) => setApplications((prev) => [newApp, ...prev])}
+        />
+
+        <ApplicationDetailModal
+          application={selectedApp}
+          onClose={() => setSelectedApp(null)}
+          onUpdated={(updatedApp) =>
+            setApplications((prev) =>
+              prev.map((a) => (a.id === updatedApp.id ? updatedApp : a))
+            )
+          }
+          onDeleted={(id) =>
+            setApplications((prev) => prev.filter((a) => a.id !== id))
+          }
         />
       </div>
     </div>
